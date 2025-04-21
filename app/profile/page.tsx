@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm } from "@/node_modules/react-hook-form/dist"
 import { z } from "zod"
 import { Shield, MapPin, Phone, Mail, Building, BadgeCheck, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"

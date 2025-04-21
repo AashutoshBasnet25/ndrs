@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm } from "@/node_modules/react-hook-form/dist"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -13,57 +13,47 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 
 const formSchema = z.object({
-  title: z.string().min(5, {
-    message: "Title must be at least 5 characters.",
+  name: z.string().min(3, {
+    message: "Resource name must be at least 3 characters.",
   }),
   type: z.string({
-    required_error: "Please select a response type.",
+    required_error: "Please select a resource type.",
   }),
   location: z.string().min(3, {
     message: "Location must be at least 3 characters.",
   }),
-  incident: z.string({
-    required_error: "Please select the related incident.",
+  quantity: z.string().min(1, {
+    message: "Please enter a quantity.",
   }),
-  team: z.string().min(2, {
-    message: "Team name must be at least 2 characters.",
+  unit: z.string().min(1, {
+    message: "Please enter a unit of measurement.",
   }),
-  startDate: z.string({
-    required_error: "Please select a start date.",
-  }),
-  endDate: z.string({
-    required_error: "Please select an end date.",
-  }),
-  description: z.string().min(10, {
-    message: "Description must be at least 10 characters.",
-  }),
-  resources: z.string().optional(),
+  description: z.string().optional(),
   contactName: z.string().min(2, {
     message: "Contact name must be at least 2 characters.",
   }),
   contactPhone: z.string().min(10, {
     message: "Please enter a valid phone number.",
   }),
+  organization: z.string().optional(),
 })
 
-export default function ResponseForm() {
+export default function ResourceForm() {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
+      name: "",
       type: "",
       location: "",
-      incident: "",
-      team: "",
-      startDate: "",
-      endDate: "",
+      quantity: "",
+      unit: "",
       description: "",
-      resources: "",
       contactName: "",
       contactPhone: "",
+      organization: "",
     },
   })
 
@@ -76,8 +66,8 @@ export default function ResponseForm() {
       setIsSubmitting(false)
       
       toast({
-        title: "Response action submitted successfully",
-        description: "Your response action has been recorded and will be coordinated accordingly.",
+        title: "Resource added successfully",
+        description: "Your resource has been added to the system.",
       })
       
       form.reset()
@@ -92,12 +82,12 @@ export default function ResponseForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="title"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Response Title</FormLabel>
+                    <FormLabel>Resource Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="E.g., Flood Relief Operation in Bardiya" {...field} />
+                      <Input placeholder="E.g., Emergency Food Supplies" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -109,20 +99,20 @@ export default function ResponseForm() {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Response Type</FormLabel>
+                    <FormLabel>Resource Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select response type" />
+                          <SelectValue placeholder="Select resource type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="relief">Relief Distribution</SelectItem>
-                        <SelectItem value="evacuation">Evacuation</SelectItem>
-                        <SelectItem value="rescue">Search and Rescue</SelectItem>
-                        <SelectItem value="medical">Medical Response</SelectItem>
-                        <SelectItem value="shelter">Shelter Setup</SelectItem>
-                        <SelectItem value="monitoring">Monitoring</SelectItem>
+                        <SelectItem value="food">Food</SelectItem>
+                        <SelectItem value="water">Water</SelectItem>
+                        <SelectItem value="medical">Medical</SelectItem>
+                        <SelectItem value="shelter">Shelter</SelectItem>
+                        <SelectItem value="equipment">Equipment</SelectItem>
+                        <SelectItem value="personnel">Personnel</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
@@ -138,60 +128,22 @@ export default function ResponseForm() {
                   <FormItem>
                     <FormLabel>Location</FormLabel>
                     <FormControl>
-                      <Input placeholder="District, Municipality, Ward" {...field} />
+                      <Input placeholder="Where is the resource currently located?" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="incident"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Related Incident</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select related incident" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="flood-bardiya">Flooding in Bardiya District</SelectItem>
-                        <SelectItem value="landslide-sindhupalchok">Landslide in Sindhupalchok</SelectItem>
-                        <SelectItem value="drought-kailali">Drought in Kailali</SelectItem>
-                        <SelectItem value="avalanche-solukhumbu">Avalanche Risk in Solukhumbu</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="team"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Response Team</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Name of the response team" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="startDate"
+                  name="quantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Date</FormLabel>
+                      <FormLabel>Quantity</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="number" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -200,12 +152,12 @@ export default function ResponseForm() {
                 
                 <FormField
                   control={form.control}
-                  name="endDate"
+                  name="unit"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Date</FormLabel>
+                      <FormLabel>Unit</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input placeholder="E.g., Packages, Kits" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -219,11 +171,11 @@ export default function ResponseForm() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Response Description</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Provide details about the response action, including objectives and planned activities" 
-                      className="min-h-[120px]"
+                      placeholder="Provide details about the resource, including condition, expiry dates if applicable, etc." 
+                      className="min-h-[100px]"
                       {...field} 
                     />
                   </FormControl>
@@ -232,28 +184,7 @@ export default function ResponseForm() {
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="resources"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Required Resources</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="List the resources needed for this response action" 
-                      className="min-h-[80px]"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Optional - List any specific resources needed
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormField
                 control={form.control}
                 name="contactName"
@@ -261,7 +192,7 @@ export default function ResponseForm() {
                   <FormItem>
                     <FormLabel>Contact Person</FormLabel>
                     <FormControl>
-                      <Input placeholder="Name of the person in charge" {...field} />
+                      <Input placeholder="Your name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -275,8 +206,25 @@ export default function ResponseForm() {
                   <FormItem>
                     <FormLabel>Contact Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="Contact phone number" {...field} />
+                      <Input placeholder="Your phone number" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="organization"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Organization</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your organization (if applicable)" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Optional
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -284,7 +232,7 @@ export default function ResponseForm() {
             </div>
             
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit Response Action"}
+              {isSubmitting ? "Submitting..." : "Add Resource"}
             </Button>
           </form>
         </Form>

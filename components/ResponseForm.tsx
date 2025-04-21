@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm } from "@/node_modules/react-hook-form/dist"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -17,18 +17,27 @@ const formSchema = z.object({
     message: "Title must be at least 5 characters.",
   }),
   type: z.string({
-    required_error: "Please select an incident type.",
+    required_error: "Please select a response type.",
   }),
   location: z.string().min(3, {
     message: "Location must be at least 3 characters.",
   }),
-  severity: z.string({
-    required_error: "Please select a severity level.",
+  incident: z.string({
+    required_error: "Please select the related incident.",
+  }),
+  team: z.string().min(2, {
+    message: "Team name must be at least 2 characters.",
+  }),
+  startDate: z.string({
+    required_error: "Please select a start date.",
+  }),
+  endDate: z.string({
+    required_error: "Please select an end date.",
   }),
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
   }),
-  affectedPeople: z.string().optional(),
+  resources: z.string().optional(),
   contactName: z.string().min(2, {
     message: "Contact name must be at least 2 characters.",
   }),
@@ -37,7 +46,7 @@ const formSchema = z.object({
   }),
 })
 
-export default function IncidentForm() {
+export default function ResponseForm() {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   
@@ -47,9 +56,12 @@ export default function IncidentForm() {
       title: "",
       type: "",
       location: "",
-      severity: "",
+      incident: "",
+      team: "",
+      startDate: "",
+      endDate: "",
       description: "",
-      affectedPeople: "",
+      resources: "",
       contactName: "",
       contactPhone: "",
     },
@@ -64,8 +76,8 @@ export default function IncidentForm() {
       setIsSubmitting(false)
       
       toast({
-        title: "Incident reported successfully",
-        description: "Your incident report has been submitted and will be reviewed shortly.",
+        title: "Response action submitted successfully",
+        description: "Your response action has been recorded and will be coordinated accordingly.",
       })
       
       form.reset()
@@ -83,9 +95,9 @@ export default function IncidentForm() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Incident Title</FormLabel>
+                    <FormLabel>Response Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="E.g., Flooding in Bardiya District" {...field} />
+                      <Input placeholder="E.g., Flood Relief Operation in Bardiya" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -97,20 +109,20 @@ export default function IncidentForm() {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Incident Type</FormLabel>
+                    <FormLabel>Response Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select incident type" />
+                          <SelectValue placeholder="Select response type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="flood">Flood</SelectItem>
-                        <SelectItem value="earthquake">Earthquake</SelectItem>
-                        <SelectItem value="landslide">Landslide</SelectItem>
-                        <SelectItem value="fire">Fire</SelectItem>
-                        <SelectItem value="drought">Drought</SelectItem>
-                        <SelectItem value="avalanche">Avalanche</SelectItem>
+                        <SelectItem value="relief">Relief Distribution</SelectItem>
+                        <SelectItem value="evacuation">Evacuation</SelectItem>
+                        <SelectItem value="rescue">Search and Rescue</SelectItem>
+                        <SelectItem value="medical">Medical Response</SelectItem>
+                        <SelectItem value="shelter">Shelter Setup</SelectItem>
+                        <SelectItem value="monitoring">Monitoring</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
@@ -135,27 +147,71 @@ export default function IncidentForm() {
               
               <FormField
                 control={form.control}
-                name="severity"
+                name="incident"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Severity Level</FormLabel>
+                    <FormLabel>Related Incident</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select severity level" />
+                          <SelectValue placeholder="Select related incident" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
+                        <SelectItem value="flood-bardiya">Flooding in Bardiya District</SelectItem>
+                        <SelectItem value="landslide-sindhupalchok">Landslide in Sindhupalchok</SelectItem>
+                        <SelectItem value="drought-kailali">Drought in Kailali</SelectItem>
+                        <SelectItem value="avalanche-solukhumbu">Avalanche Risk in Solukhumbu</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="team"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Response Team</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Name of the response team" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
             
             <FormField
@@ -163,10 +219,10 @@ export default function IncidentForm() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Incident Description</FormLabel>
+                  <FormLabel>Response Description</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Provide details about the incident, including when it occurred and current situation" 
+                      placeholder="Provide details about the response action, including objectives and planned activities" 
                       className="min-h-[120px]"
                       {...field} 
                     />
@@ -178,15 +234,19 @@ export default function IncidentForm() {
             
             <FormField
               control={form.control}
-              name="affectedPeople"
+              name="resources"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Estimated Affected People</FormLabel>
+                  <FormLabel>Required Resources</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Approximate number of affected people" {...field} />
+                    <Textarea 
+                      placeholder="List the resources needed for this response action" 
+                      className="min-h-[80px]"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormDescription>
-                    Leave blank if unknown
+                    Optional - List any specific resources needed
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -201,7 +261,7 @@ export default function IncidentForm() {
                   <FormItem>
                     <FormLabel>Contact Person</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your name" {...field} />
+                      <Input placeholder="Name of the person in charge" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -215,7 +275,7 @@ export default function IncidentForm() {
                   <FormItem>
                     <FormLabel>Contact Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your phone number" {...field} />
+                      <Input placeholder="Contact phone number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -224,7 +284,7 @@ export default function IncidentForm() {
             </div>
             
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit Incident Report"}
+              {isSubmitting ? "Submitting..." : "Submit Response Action"}
             </Button>
           </form>
         </Form>
