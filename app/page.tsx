@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link"
 import Image from "next/image"
 import { AlertCircle, ArrowRight, Map, Package } from "lucide-react"
