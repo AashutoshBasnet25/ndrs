@@ -2,13 +2,18 @@ import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
 import {
+  useForm,
+  UseFormReturn,
+  FieldValues,
+  UseFormProps,
+  SubmitHandler,
+  UseFormRegisterReturn,
   Controller,
   ControllerProps,
   FieldPath,
-  FieldValues,
   FormProvider,
-  useFormContext,
-} from "@/node_modules/react-hook-form/dist"
+  useFormContext
+} from "react-hook-form"
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
@@ -42,7 +47,7 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext()
+  const { getFieldState, formState } = useForm()
 
   const fieldState = getFieldState(fieldContext.name, formState)
 
