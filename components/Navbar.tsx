@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/contexts/auth-context";
 import {
   ArrowUp,
   AlertCircle,
@@ -37,7 +39,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/lib/auth";
 
 const navItems = [
   { href: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
@@ -49,21 +50,24 @@ const navItems = [
 
 const themes = [
   { name: "Light", value: "light" },
-  { name: "Dark", value: "dark" },
-  { name: "Gunmetal", value: "gunmetal" },
-  { name: "System", value: "system" },
+  { name: "Nepali", value: "nepali" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, isLoggedIn, logout } = useAuth();
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [isMobile, setIsMobile] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
-  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    setIsAccountOpen(false);
+  };
 
   // Effect to handle window resize and determine if the screen is mobile
   useEffect(() => {
@@ -91,11 +95,6 @@ export default function Navbar() {
     setIsMenuOpen(false);
   };
 
-  const handleLogout = () => {
-    logout();
-    setIsAccountOpen(false);
-  };
-
   return (
     <>
       {/* Desktop Navbar */}
@@ -110,7 +109,13 @@ export default function Navbar() {
               pathname === "/" && "pointer-events-none"
             )}
           >
-            <Shield className="h-6 w-6" />
+            <Image
+              src="/nepal-gov-logo.png"
+              alt="Government of Nepal Logo"
+              width={24}
+              height={24}
+              className="h-6 w-6"
+            />
           </Link>
 
           {/* Account Button */}
@@ -119,10 +124,10 @@ export default function Navbar() {
               <Button variant="ghost" size="icon" className="h-[72px] w-full rounded-none">
                 {isAccountOpen ? (
                   <X className="h-5 w-5" /> // Show X when dropdown is open
-                ) : user ? (
+                ) : isLoggedIn ? (
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                    {/* <AvatarImage src={user?.profile_picture} alt={user?.name} /> */}
+                    <AvatarFallback className="hover:text-red-500">{user?.name?.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                   </Avatar>
                 ) : (
                   <Lock className="h-5 w-5" />
@@ -130,16 +135,16 @@ export default function Navbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="right" className="w-64">
-              {user ? (
+              {isLoggedIn ? (
                 <>
                   <div className="flex items-center gap-2 p-2 border-b">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                      {/* <AvatarImage src={user?.profile_picture} alt={user?.name} /> */}
+                      <AvatarFallback>{user?.name?.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium">{user.name}</span>
-                      <span className="text-xs text-muted-foreground">{user.role}</span>
+                      <span className="text-sm font-medium">{user?.name}</span>
+                      <span className="text-xs text-muted-foreground">{user?.role}</span>
                     </div>
                   </div>
                   <Link href="/profile">
@@ -189,7 +194,7 @@ export default function Navbar() {
                     theme === t.value && "bg-accent"
                   )}
                 >
-                  <div className="h-4 w-4 rounded-full" style={{ backgroundColor: t.value === 'light' ? '#fff' : t.value === 'dark' ? '#3a3939' : t.value === 'gunmetal' ? '#1a202f' : '#0a0a0a' }} />
+                  <div className="h-4 w-4 rounded-full" style={{ backgroundColor: t.value === 'light' ? '#fff' : t.value === 'dark' ? '#3a3939' : t.value === 'gunmetal' ? '#1a202f' : t.value === 'nepali' ? '#DC143C' : '#0a0a0a' }} />
                   {t.name}
                 </DropdownMenuItem>
               ))}
@@ -205,18 +210,18 @@ export default function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-80" container={mainRef.current}>
-                <SheetHeader className="fixed top-8">
+                <SheetHeader className="fixed top-11">
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
-                <div className="py-6 fixed top-15">
-                  <div className="mb-4">
+                <div className="py-6 fixed top-16">
+                  {/* <div className="mb-4">
                     <Input
                       type="search"
                       placeholder="Search..."
                       className="h-9"
-                      // prefix={<Search className="h-4 w-4 text-muted-foreground" />}
+                      prefix={<Search className="h-4 w-4 text-muted-foreground" />}
                     />
-                  </div>
+                  </div> */}
                   <nav className="space-y-2">
                     {navItems.map((item) => (
                       <button
@@ -258,19 +263,19 @@ export default function Navbar() {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="fixed w-full sm:w-96" container={mainRef.current}>
+              <SheetContent side="left" className="fixed w-full sm:w-96 p-5" container={mainRef.current}>
                 <SheetHeader>
-                  <SheetTitle>Menu</SheetTitle>
+                  <SheetTitle className="my-[-5px]">Menu</SheetTitle>
                 </SheetHeader>
                 <div className="py-6">
-                  <div className="mb-4">
+                  {/* <div className="mb-4">
                     <Input
                       type="search"
                       placeholder="Search..."
                       className="h-9"
-                      // prefix={<Search className="h-4 w-4 text-muted-foreground" />}
+                      prefix={<Search className="h-4 w-4 text-muted-foreground" />}
                     />
-                  </div>
+                  </div> */}
                   <nav className="space-y-2">
                     {navItems.map((item) => (
                       <button
@@ -291,7 +296,13 @@ export default function Navbar() {
             </Sheet>
 
             <Link href="/" className="flex items-center gap-2">
-              <Shield className="h-6 w-6" />
+              <Image
+                src="/nepal-gov-logo.png"
+                alt="Government of Nepal Logo"
+                width={24}
+                height={24}
+                className="h-6 w-6"
+              />
               <span className="font-semibold">Nepal DRS</span>
             </Link>
 
@@ -313,7 +324,7 @@ export default function Navbar() {
                         theme === t.value && "bg-accent"
                       )}
                     >
-                      <div className="h-4 w-4 rounded-full" style={{ backgroundColor: t.value === 'light' ? '#fff' : t.value === 'dark' ? '#3a3939' : t.value === 'gunmetal' ? '#1a202f' : '#0a0a0a' }} />
+                      <div className="h-4 w-4 rounded-full" style={{ backgroundColor: t.value === 'light' ? '#fff' : t.value === 'dark' ? '#3a3939' : t.value === 'gunmetal' ? '#1a202f' : t.value === 'nepali' ? '#DC143C' : '#0a0a0a' }} />
                       {t.name}
                     </DropdownMenuItem>
                   ))}
@@ -324,10 +335,10 @@ export default function Navbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    {user ? (
+                    {isLoggedIn ? (
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback>{user.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                        {/* <AvatarImage src={user?.profile_picture} alt={user?.name} /> */}
+                        <AvatarFallback>{user?.name?.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                       </Avatar>
                     ) : (
                       <Lock className="h-5 w-5" />
@@ -335,16 +346,16 @@ export default function Navbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
-                  {user ? (
+                  {isLoggedIn ? (
                     <>
                       <div className="flex items-center gap-2 p-2 border-b">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>{user.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                          {/* <AvatarImage src={user?.profile_picture} alt={user?.name} /> */}
+                          <AvatarFallback>{user?.name?.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium">{user.name}</span>
-                          <span className="text-xs text-muted-foreground">{user.role}</span>
+                          <span className="text-sm font-medium">{user?.name}</span>
+                          <span className="text-xs text-muted-foreground">{user?.role}</span>
                         </div>
                       </div>
                       <Link href="/profile">
