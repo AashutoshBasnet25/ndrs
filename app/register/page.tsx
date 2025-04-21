@@ -13,8 +13,12 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { register as registerUser } from "@/lib/api"
-import { useAuth } from "@/lib/auth"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { register } from "@/lib/api"
+import Image from "next/image"
+
+const MAX_FILE_SIZE = 5000000; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -29,6 +33,17 @@ const formSchema = z.object({
   confirmPassword: z.string(),
   role: z.string({
     required_error: "Please select a role.",
+  }).refine(value => [
+    'admin', 
+    'district_officer',
+    'emergency_responder', 
+    'resource_manager',
+    'field_officer',
+    'volunteer',
+    'ngo_representative',
+    'public_user'
+  ].includes(value), {
+    message: "Please select a valid role"
   }),
   organization: z.string().optional(),
   phone: z.string().min(10, {
@@ -37,6 +52,14 @@ const formSchema = z.object({
   district: z.string().min(2, {
     message: "Please enter your district.",
   }),
+  avatar: z
+    .any()
+    .refine((files) => files?.length == 0 || files?.[0]?.size <= MAX_FILE_SIZE, 'Max file size is 5MB.')
+    .refine(
+      (files) => files?.length == 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      'Only .jpg, .jpeg, .png and .webp formats are supported.'
+    )
+    .optional()
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -45,10 +68,10 @@ const formSchema = z.object({
 export default function RegisterPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState(1)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,26 +87,77 @@ export default function RegisterPage() {
     },
   })
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "Error",
+          description: "Image size should be less than 5MB",
+          variant: "destructive",
+        })
+        return
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast({
+          title: "Error",
+          description: "Only .jpg, .jpeg, .png and .webp formats are supported",
+          variant: "destructive",
+        })
+        return
+      }
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true)
       
-      // Remove confirmPassword before sending to API
-      const { confirmPassword, ...registrationData } = values
+      // Remove confirmPassword and prepare avatar before sending to API
+      const { confirmPassword, avatar, ...registrationData } = values
       
-      // Register the user
-      const response = await registerUser(registrationData)
+      // Convert avatar to base64 if exists
+      let profilePicture = null
+      if (avatar?.[0]) {
+        const reader = new FileReader()
+        profilePicture = await new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.readAsDataURL(avatar[0])
+        })
+      }
+
+      // Prepare data according to database schema
+      const userData = {
+        ...registrationData,
+        profile_picture: profilePicture || undefined,
+        role: registrationData.role || 'public_user',
+        organization: registrationData.organization || undefined,
+        phone: registrationData.phone,
+        district: registrationData.district,
+        name: registrationData.name,
+        email: registrationData.email,
+        password: registrationData.password
+      }
+
+      const response = await register(userData)
       
-      toast({
-        title: "Account created successfully",
-        description: "Please log in with your credentials.",
-      })
-      
-      // Automatically log in the user
-      await login(values.email, values.password)
-      
-      router.push("/profile")
+      if (response.status === 'success') {
+        toast({
+          title: "Account created successfully",
+          description: "You can now login with your credentials.",
+        })
+        
+        router.push("/login")
+      } else {
+        throw new Error("Registration failed")
+      }
     } catch (error: any) {
+      console.error('Registration Error:', error.response?.data || error)
       toast({
         title: "Registration failed",
         description: error.response?.data?.message || "Something went wrong",
@@ -97,7 +171,13 @@ export default function RegisterPage() {
   return (
     <div className="container max-w-2xl mx-auto py-12 px-4">
       <div className="flex justify-center mb-8">
-        <Shield className="h-12 w-12 text-primary" />
+        <Image
+          src="/nepal-gov-logo.png"
+          alt="Nepal Government Logo"
+          width={48}
+          height={48}
+          className="h-12 w-12 text-primary"
+        />
       </div>
 
       {step === 1 ? (
@@ -299,6 +379,39 @@ export default function RegisterPage() {
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="avatar"
+                  render={({ field: { value, onChange, ...field } }) => (
+                    <FormItem>
+                      <FormLabel>Profile Picture</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-4">
+                          {avatarPreview && (
+                            <Avatar className="h-20 w-20">
+                              <AvatarImage src={avatarPreview} alt="Preview" />
+                              <AvatarFallback>Preview</AvatarFallback>
+                            </Avatar>
+                          )}
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              handleAvatarChange(e)
+                              onChange(e.target.files)
+                            }}
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Upload a profile picture (max 5MB, .jpg, .png, or .webp)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Submit Registration"}

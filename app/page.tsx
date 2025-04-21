@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { AlertCircle, ArrowRight, Map, Package, Shield } from "lucide-react"
+import Image from "next/image"
+import { AlertCircle, ArrowRight, Map, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -12,8 +13,18 @@ export default async function Home() {
   return (
     <div className="container mx-auto py-8 px-4">
       {/* Hero Section */}
-      <section className="py-12 md:py-24 lg:py-32 flex flex-col items-center text-center">
+      <section className="py-6 md:py-12 lg:py-16 flex flex-col items-center text-center">
         <div className="mx-auto max-w-3xl space-y-4">
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/flag.gif"
+              alt="Nepal Flag"
+              width={120}
+              height={120}
+              className="shadow-lg"
+              priority
+            />
+          </div>
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
             Nepal Disaster Response System
           </h1>

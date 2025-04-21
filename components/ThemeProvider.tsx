@@ -12,8 +12,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
       enableSystem
       value={{
         light: "light",
-        dark: "dark",
-        gunmetal: "gunmetal",
+        nepali: "nepali",
       }}
       {...props}
     >
