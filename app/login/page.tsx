@@ -1,13 +1,11 @@
 "use client"
 
-import dynamic from 'next/dynamic';
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -16,6 +14,9 @@ import { useToast } from "@/hooks/use-toast"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { useAuth } from "@/lib/auth"
 import Image from "next/image"
+
+// Add dynamic export to prevent static generation
+export const dynamic = 'force-dynamic'
 
 const loginSchema = z.object({
   email: z.string().email({
@@ -35,15 +36,15 @@ const forgotPasswordSchema = z.object({
   }),
 })
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const { toast } = useToast()
+  const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [showOTPInput, setShowOTPInput] = useState(false)
-  const { login: authLogin } = useAuth()
   
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
+  const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -59,23 +60,23 @@ export default function LoginPage() {
     },
   })
 
-  async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
+  async function onSubmit(values: z.infer<typeof loginSchema>) {
+    setIsLoading(true)
+    
     try {
-      setIsLoading(true)
-      await authLogin(values.email, values.password)
+      await login(values.email, values.password)
       
       toast({
-        title: "Success",
-        description: "Logged in successfully",
+        title: "Login successful",
+        description: "Welcome back to Nepal Disaster Response System.",
       })
       
       router.push("/")
     } catch (error: any) {
-      console.error('Login error:', error)
       toast({
         title: "Login failed",
         description: error.response?.data?.message || "Invalid email or password",
-        variant: "destructive"
+        variant: "destructive",
       })
     } finally {
       setIsLoading(false)
@@ -125,10 +126,10 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           {!showForgotPassword ? (
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
-                  control={loginForm.control}
+                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -142,7 +143,7 @@ export default function LoginPage() {
                 />
                 
                 <FormField
-                  control={loginForm.control}
+                  control={form.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
@@ -238,5 +239,13 @@ export default function LoginPage() {
         </CardFooter>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   )
 }
